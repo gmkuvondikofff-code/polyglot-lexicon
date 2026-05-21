@@ -151,24 +151,37 @@ export function useFavorites() {
 //   uz: foo ru: bar en: baz zh: 你
 export function parseBulkText(text: string): Omit<WordEntry, "id" | "createdAt">[] {
   const out: Omit<WordEntry, "id" | "createdAt">[] = [];
+  // Strip leading serial markers like "1.", "10-", "3)", "12:" plus whitespace
+  const cleanToken = (s: string) => s.replace(/^\s*\d+\s*[\.\-\)\:]\s*/, "").trim();
+
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
+    // also strip a serial from the start of the whole line (e.g. "1. uz | ru | en | zh")
+    .map((l) => l.replace(/^\s*\d+\s*[\.\-\)\:]\s*/, ""))
     .filter(Boolean);
 
   for (const line of lines) {
-    // Try labeled format
     const labeled = /uz\s*[:=]\s*(.+?)\s*[,;|]\s*ru\s*[:=]\s*(.+?)\s*[,;|]\s*en\s*[:=]\s*(.+?)\s*[,;|]\s*zh\s*[:=]\s*(.+)/i.exec(
       line,
     );
     if (labeled) {
-      out.push({ uz: labeled[1].trim(), ru: labeled[2].trim(), en: labeled[3].trim(), zh: labeled[4].trim() });
+      out.push({
+        uz: cleanToken(labeled[1]),
+        ru: cleanToken(labeled[2]),
+        en: cleanToken(labeled[3]),
+        zh: cleanToken(labeled[4]),
+      });
       continue;
     }
-    // Split by | , ; / tab
     const parts = line.split(/\s*[|;\t]\s*|\s+-\s+|\s*,\s*/).filter(Boolean);
     if (parts.length >= 4) {
-      out.push({ uz: parts[0], ru: parts[1], en: parts[2], zh: parts[3] });
+      out.push({
+        uz: cleanToken(parts[0]),
+        ru: cleanToken(parts[1]),
+        en: cleanToken(parts[2]),
+        zh: cleanToken(parts[3]),
+      });
     }
   }
   return out;
