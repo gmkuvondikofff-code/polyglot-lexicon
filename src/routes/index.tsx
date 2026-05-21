@@ -28,7 +28,8 @@ function Index() {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return entries.filter((e) => {
+    const sortKey: Lang = lang === "all" ? "uz" : lang;
+    const filtered = entries.filter((e) => {
       if (onlyFavs && !favorites.includes(e.id)) return false;
       if (!q) return true;
       if (lang === "all") {
@@ -41,6 +42,10 @@ function Index() {
       }
       return e[lang].toLowerCase().includes(q);
     });
+    const locale = sortKey === "zh" ? "zh" : sortKey === "ru" ? "ru" : sortKey === "uz" ? "uz" : "en";
+    return [...filtered].sort((a, b) =>
+      a[sortKey].localeCompare(b[sortKey], locale, { sensitivity: "base" }),
+    );
   }, [entries, query, lang, onlyFavs, favorites]);
 
   return (
