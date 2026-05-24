@@ -49,7 +49,7 @@ import { toast } from "sonner";
 import { authConfig, isAuthenticated, setAuthenticated } from "@/lib/auth-config";
 import {
   dictionaryActions,
-  parseBulkText,
+  parseBulk,
   useDictionary,
   type WordEntry,
 } from "@/lib/dictionary";
