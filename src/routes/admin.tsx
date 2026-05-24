@@ -324,7 +324,7 @@ function BulkImport() {
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Salom | Привет | Hello | 你好"
+            placeholder={`// Bitta qator = bitta entry. Har qanday format qabul qilinadi:\n// 1. Salom | Привет | Hello | 你好\n// 2) Kitob, Книга, Book, 书\n// uz: Olma / ru: Яблоко / en: Apple / zh: 苹果\n// Ortiqcha raqam, nuqta, vergul, [ ] | / belgilar avtomatik tozalanadi.`}
             className="min-h-[260px] font-mono text-sm"
           />
           <Button onClick={analyze} disabled={parsing || !text.trim()} className="w-full gap-2">
