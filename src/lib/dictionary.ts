@@ -17,16 +17,7 @@ const EVENT = "polyglot:dictionary-change";
 const FAV_EVENT = "polyglot:favorites-change";
 
 // Start with an empty database — entries are added via the admin panel.
-const seed: WordEntry[] = [
-  { id: "_placeholder_1", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
-  { id: "_placeholder_2", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
-  { id: "_placeholder_3", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
-  { id: "_placeholder_4", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
-  { id: "_placeholder_5", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
-  { id: "6", uz: "Maktab", ru: "Школа", en: "School", zh: "学校", createdAt: Date.now() },
-  { id: "7", uz: "Sevgi", ru: "Любовь", en: "Love", zh: "爱", createdAt: Date.now() },
-  { id: "8", uz: "Quyosh", ru: "Солнце", en: "Sun", zh: "太阳", createdAt: Date.now() },
-];
+const seed: WordEntry[] = [];
 
 function read(): WordEntry[] {
   if (typeof window === "undefined") return seed;
