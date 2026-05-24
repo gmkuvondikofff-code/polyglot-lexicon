@@ -136,45 +136,78 @@ export function useFavorites() {
 }
 
 // --- AI-like parsing simulator ---
-// Accepts formats:
-//   uz | ru | en | zh   (pipe-separated, one per line)
-//   uz, ru, en, zh
-//   uz - ru - en - zh
-//   uz: foo ru: bar en: baz zh: 你
+// Accepts virtually any format. Each non-empty line = one entry.
+// Tokens may be separated by any of:  . , ; | / \ [ ] ( ) tab, " - ", multiple spaces.
+// Each token is classified by Unicode script:
+//   - Han chars        → zh
+//   - Cyrillic chars   → ru
+//   - Latin chars      → first occurrence = uz, second = en
+// Leading numbering ("1.", "10-", "3)", "12:") is stripped.
+// Overly long tokens are trimmed to the first clause / 60 chars.
 export function parseBulkText(text: string): Omit<WordEntry, "id" | "createdAt">[] {
   const out: Omit<WordEntry, "id" | "createdAt">[] = [];
-  // Strip leading serial markers like "1.", "10-", "3)", "12:" plus whitespace
-  const cleanToken = (s: string) => s.replace(/^\s*\d+\s*[\.\-\)\:]\s*/, "").trim();
+
+  const stripSerial = (s: string) =>
+    s.replace(/^[\s\d]*\d+\s*[.\-)\]:]+\s*/, "").trim();
+
+  const trimLong = (s: string) => {
+    let t = s.trim();
+    const cut = t.split(/[.!?。！？\n\r]/)[0];
+    if (cut) t = cut.trim();
+    if (t.length > 60) t = t.slice(0, 60).trim();
+    return t;
+  };
+
+  const clean = (s: string) => trimLong(stripSerial(s));
+
+  const hasHan = (s: string) => /[\u3400-\u9fff\uf900-\ufaff]/.test(s);
+  const hasCyr = (s: string) => /[\u0400-\u04ff]/.test(s);
+  const hasLat = (s: string) => /[A-Za-zÀ-ÿʼ'`]/.test(s);
 
   const lines = text
-    .split(/\r?\n/)
+    .split(/\r?\n+/)
     .map((l) => l.trim())
-    // also strip a serial from the start of the whole line (e.g. "1. uz | ru | en | zh")
-    .map((l) => l.replace(/^\s*\d+\s*[\.\-\)\:]\s*/, ""))
     .filter(Boolean);
 
-  for (const line of lines) {
-    const labeled = /uz\s*[:=]\s*(.+?)\s*[,;|]\s*ru\s*[:=]\s*(.+?)\s*[,;|]\s*en\s*[:=]\s*(.+?)\s*[,;|]\s*zh\s*[:=]\s*(.+)/i.exec(
-      line,
-    );
-    if (labeled) {
+  for (const rawLine of lines) {
+    const line = stripSerial(rawLine);
+
+    // 1) Try labeled format (uz: x, ru: y, en: z, zh: w) in any order.
+    const labelRe = /\b(uz|ru|en|zh)\s*[:=]\s*([^,;|/\\\]\[\n\r]+?)(?=\s*(?:[,;|/\\\]\[]|\b(?:uz|ru|en|zh)\s*[:=]|$))/gi;
+    const labeled: Record<string, string> = {};
+    let m: RegExpExecArray | null;
+    while ((m = labelRe.exec(line)) !== null) {
+      const key = m[1].toLowerCase();
+      if (!labeled[key]) labeled[key] = clean(m[2]);
+    }
+    if (Object.keys(labeled).length >= 2) {
       out.push({
-        uz: cleanToken(labeled[1]),
-        ru: cleanToken(labeled[2]),
-        en: cleanToken(labeled[3]),
-        zh: cleanToken(labeled[4]),
+        uz: labeled.uz ?? "",
+        ru: labeled.ru ?? "",
+        en: labeled.en ?? "",
+        zh: labeled.zh ?? "",
       });
       continue;
     }
-    const parts = line.split(/\s*[|;\t]\s*|\s+-\s+|\s*,\s*/).filter(Boolean);
-    if (parts.length >= 4) {
-      out.push({
-        uz: cleanToken(parts[0]),
-        ru: cleanToken(parts[1]),
-        en: cleanToken(parts[2]),
-        zh: cleanToken(parts[3]),
-      });
+
+    // 2) Fallback: split by any separator, classify each token by script.
+    const tokens = line
+      .split(/[.,;|/\\\]\[()\t]+|\s{2,}|\s+-\s+/)
+      .map((t) => clean(t))
+      .filter(Boolean);
+
+    let uz = "", ru = "", en = "", zh = "";
+    for (const tk of tokens) {
+      if (!zh && hasHan(tk)) { zh = tk; continue; }
+      if (!ru && hasCyr(tk)) { ru = tk; continue; }
+      if (hasLat(tk)) {
+        if (!uz) uz = tk;
+        else if (!en) en = tk;
+      }
     }
+
+    if (!uz && !ru && !en && !zh) continue;
+    out.push({ uz, ru, en, zh });
   }
   return out;
 }
