@@ -49,7 +49,7 @@ import { toast } from "sonner";
 import { authConfig, isAuthenticated, setAuthenticated } from "@/lib/auth-config";
 import {
   dictionaryActions,
-  parseBulkText,
+  parseBulk,
   useDictionary,
   type WordEntry,
 } from "@/lib/dictionary";
@@ -287,15 +287,27 @@ function BulkImport() {
     setParsing(true);
     setPreview(null);
     setTimeout(() => {
-      const parsed = parseBulkText(text);
-      setPreview(parsed);
+      const { entries, invalid } = parseBulk(text);
+      setPreview(entries);
       setParsing(false);
-      if (parsed.length === 0) {
-        toast.error("No valid entries detected", {
-          description: "Use one entry per line with 4 columns (uz | ru | en | zh).",
-        });
+
+      if (invalid.length > 0) {
+        const first = invalid[0];
+        toast.error(
+          `${invalid.length} qator to'liq emas — har bir entryda 4 ta til tarjimasi bo'lishi shart`,
+          {
+            description: `Misol: "${first.line.slice(0, 40)}${first.line.length > 40 ? "…" : ""}" — yetishmayotgan: ${first.missing.join(", ").toUpperCase()}`,
+          },
+        );
+      }
+      if (entries.length === 0) {
+        if (invalid.length === 0) {
+          toast.error("Hech qanday entry topilmadi", {
+            description: "Har bir qatorda 4 tildagi so'z bo'lishi kerak.",
+          });
+        }
       } else {
-        toast.success(`AI parsed ${parsed.length} entries`);
+        toast.success(`AI ${entries.length} ta to'liq entry ajratdi`);
       }
     }, 900);
   }
@@ -308,6 +320,16 @@ function BulkImport() {
     setText("");
   }
 
+  const placeholder = `// Bitta qator = bitta entry. AI har qanday formatdan tarjimani ajratadi:
+//
+//   Salom | Привет | Hello | 你好
+//   1. Kitob, Книга, Book, 书
+//   uz: Olma / ru: Яблоко / en: Apple / zh: 苹果
+//   Salom Привет Hello 你好          ← belgilarsiz ham ishlaydi
+//
+// Har bir entryda 4 tildagi (UZ · RU · EN · ZH) tarjima bo'lishi shart,
+// aks holda u qator xato sifatida ajratiladi.`;
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card className="border-border/60 bg-card/60">
@@ -317,16 +339,26 @@ function BulkImport() {
           </CardTitle>
           <CardDescription>
             Paste raw text. Our parser extracts 4-language entries. Supports{" "}
-            <code>uz | ru | en | zh</code>, comma-separated, or labeled formats.
+            <code>uz | ru | en | zh</code>, comma-separated, labeled, or even raw
+            text with no separators.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={`// Bitta qator = bitta entry. Har qanday format qabul qilinadi:\n// 1. Salom | Привет | Hello | 你好\n// 2) Kitob, Книга, Book, 书\n// uz: Olma / ru: Яблоко / en: Apple / zh: 苹果\n// Ortiqcha raqam, nuqta, vergul, [ ] | / belgilar avtomatik tozalanadi.`}
-            className="min-h-[260px] font-mono text-sm"
-          />
+          <div className="relative">
+            {!text && (
+              <pre
+                aria-hidden
+                className="pointer-events-none absolute inset-0 m-0 select-none overflow-hidden whitespace-pre-wrap rounded-md border border-border/40 bg-background/30 p-3 font-mono text-xs italic leading-relaxed text-emerald-400/40"
+              >
+                {placeholder}
+              </pre>
+            )}
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              className="relative min-h-[260px] bg-transparent font-mono text-sm"
+            />
+          </div>
           <Button onClick={analyze} disabled={parsing || !text.trim()} className="w-full gap-2">
             {parsing ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
             {parsing ? "Analyzing with AI…" : "Analyze and import"}
