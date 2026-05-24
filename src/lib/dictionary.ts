@@ -11,17 +11,18 @@ export interface WordEntry {
   createdAt: number;
 }
 
-const STORAGE_KEY = "polyglot.dictionary.v1";
-const FAV_KEY = "polyglot.favorites.v1";
+const STORAGE_KEY = "polyglot.dictionary.v2";
+const FAV_KEY = "polyglot.favorites.v2";
 const EVENT = "polyglot:dictionary-change";
 const FAV_EVENT = "polyglot:favorites-change";
 
+// Start with an empty database — entries are added via the admin panel.
 const seed: WordEntry[] = [
-  { id: "1", uz: "Salom", ru: "Привет", en: "Hello", zh: "你好", createdAt: Date.now() },
-  { id: "2", uz: "Rahmat", ru: "Спасибо", en: "Thank you", zh: "谢谢", createdAt: Date.now() },
-  { id: "3", uz: "Kitob", ru: "Книга", en: "Book", zh: "书", createdAt: Date.now() },
-  { id: "4", uz: "Suv", ru: "Вода", en: "Water", zh: "水", createdAt: Date.now() },
-  { id: "5", uz: "Do'st", ru: "Друг", en: "Friend", zh: "朋友", createdAt: Date.now() },
+  { id: "_placeholder_1", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
+  { id: "_placeholder_2", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
+  { id: "_placeholder_3", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
+  { id: "_placeholder_4", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
+  { id: "_placeholder_5", uz: "", ru: "", en: "", zh: "", createdAt: 0 },
   { id: "6", uz: "Maktab", ru: "Школа", en: "School", zh: "学校", createdAt: Date.now() },
   { id: "7", uz: "Sevgi", ru: "Любовь", en: "Love", zh: "爱", createdAt: Date.now() },
   { id: "8", uz: "Quyosh", ru: "Солнце", en: "Sun", zh: "太阳", createdAt: Date.now() },
