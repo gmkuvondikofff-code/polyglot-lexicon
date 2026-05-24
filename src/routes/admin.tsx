@@ -279,9 +279,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 /* ---------------- Bulk Import ---------------- */
 
 function BulkImport() {
-  const [text, setText] = useState(
-    "Salom | Привет | Hello | 你好\nKitob | Книга | Book | 书\nuz: Olma, ru: Яблоко, en: Apple, zh: 苹果",
-  );
+  const [text, setText] = useState("");
   const [parsing, setParsing] = useState(false);
   const [preview, setPreview] = useState<Omit<WordEntry, "id" | "createdAt">[] | null>(null);
 
